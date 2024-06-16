@@ -4,6 +4,7 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier,
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import accuracy_score, classification_report
+import numpy as np
 
 def printRes(y_test, y_pred):
     # Оценка модели
@@ -14,57 +15,76 @@ def printRes(y_test, y_pred):
     print('Classification Report:')
     print(report)
 
+def printFeatureImportances(model, vectorizer):
+    feature_names = vectorizer.get_feature_names_out()
+    importances = model.feature_importances_
+    indices = np.argsort(importances)[::-1]
+
+    print("Feature importances:")
+    for i in range(10):
+        print(f"{i + 1}. Feature {feature_names[indices[i]]} ({importances[indices[i]]})")
+
+def vectorising(X_test, X_test_val, X_train):
+    vectorizer = TfidfVectorizer(max_features=5000, ngram_range=(1, 2))
+    X_train_tfidf = vectorizer.fit_transform(X_train)
+    X_test_tfidf = vectorizer.transform(X_test)
+    X_test_val_tfidf = vectorizer.transform(X_test_val)
+    return X_test_tfidf, X_test_val_tfidf, X_train_tfidf, vectorizer
+
 def randomForestModel(X_train, y_train, X_test, y_test, X_test_val, y_test_val):
-    pipeline = Pipeline([
-        ('tfidf', TfidfVectorizer(max_features=5000, ngram_range=(1, 2))),
-        ('clf', RandomForestClassifier(n_estimators=200, max_depth=20, min_samples_split=5, random_state=42))
-    ])
+    X_test_tfidf, X_test_val_tfidf, X_train_tfidf, vectorizer = vectorising(X_test, X_test_val, X_train)
+
+    model = RandomForestClassifier(n_estimators=200, max_depth=20, min_samples_split=5, random_state=42)
 
     # Обучение модели
-    pipeline.fit(X_train, y_train)
+    model.fit(X_train_tfidf, y_train)
 
     print('Предсказание на тестовых данных:')
-    y_pred = pipeline.predict(X_test)
+    y_pred = model.predict(X_test_tfidf)
     printRes(y_test, y_pred)
 
     print('Предсказание на валидирующих данных:')
-    y_pred_val = pipeline.predict(X_test_val)
+    y_pred_val = model.predict(X_test_val_tfidf)
     printRes(y_test_val, y_pred_val)
+
+    printFeatureImportances(model, vectorizer)
+
 
 def gradientBoostingModel(X_train, y_train, X_test, y_test, X_test_val, y_test_val):
-    pipeline = Pipeline([
-        ('tfidf', TfidfVectorizer(max_features=5000, ngram_range=(1, 2))),
-        ('clf', GradientBoostingClassifier(n_estimators=200, max_depth=3, min_samples_split=5, random_state=42))
-    ])
+    X_test_tfidf, X_test_val_tfidf, X_train_tfidf, vectorizer = vectorising(X_test, X_test_val, X_train)
+
+    model = GradientBoostingClassifier(n_estimators=200, max_depth=3, min_samples_split=5, random_state=42)
 
     # Обучение модели
-    pipeline.fit(X_train, y_train)
+    model.fit(X_train_tfidf, y_train)
 
     print('Предсказание на тестовых данных:')
-    y_pred = pipeline.predict(X_test)
+    y_pred = model.predict(X_test_tfidf)
     printRes(y_test, y_pred)
 
     print('Предсказание на валидирующих данных:')
-    y_pred_val = pipeline.predict(X_test_val)
+    y_pred_val = model.predict(X_test_val_tfidf)
     printRes(y_test_val, y_pred_val)
+
+    printFeatureImportances(model, vectorizer)
 
 def adaBoostingModel(X_train, y_train, X_test, y_test, X_test_val, y_test_val):
-    pipeline = Pipeline([
-        ('tfidf', TfidfVectorizer(max_features=5000, ngram_range=(1, 2))),
-        ('clf', AdaBoostClassifier(n_estimators=200, random_state=42))
-    ])
+    X_test_tfidf, X_test_val_tfidf, X_train_tfidf, vectorizer = vectorising(X_test, X_test_val, X_train)
+
+    model = AdaBoostClassifier(n_estimators=200, random_state=42)
 
     # Обучение модели
-    pipeline.fit(X_train, y_train)
+    model.fit(X_train_tfidf, y_train)
 
     print('Предсказание на тестовых данных:')
-    y_pred = pipeline.predict(X_test)
+    y_pred = model.predict(X_test_tfidf)
     printRes(y_test, y_pred)
 
     print('Предсказание на валидирующих данных:')
-    y_pred_val = pipeline.predict(X_test_val)
+    y_pred_val = model.predict(X_test_val_tfidf)
     printRes(y_test_val, y_pred_val)
 
+    printFeatureImportances(model, vectorizer)
 
 
 # Загрузка данных
