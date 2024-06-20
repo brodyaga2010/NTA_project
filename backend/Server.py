@@ -9,9 +9,10 @@ from flask_cors import CORS
 
 
 def model(validName):
-    data = pd.read_csv('GPW/training.csv')
     test_data = pd.read_csv(validName)
-    X = data['Query']
+    if 'Query' not in test_data.columns:
+        print("Поле 'Query' не найдено в датасете.")
+        return [0]
     X_test_val = test_data['Query']
 
     vectorizer = joblib.load('vectorizer.pkl')
@@ -19,7 +20,6 @@ def model(validName):
 
     model = joblib.load('gradient_boosting_model.pkl')
     y_pred = model.predict(X_test_val_tfidf)
-    print(y_pred)
     return y_pred.tolist()
 
 
@@ -33,9 +33,24 @@ def getResPredict(predictionOfDns, predictionOfDga):
 
     return res
 
+def getListOfThreds(filename, resPredict):
+    df = pd.read_csv(filename)  # Используем пробел в качестве разделителя
+
+    # Проверка, что длина предсказаний совпадает с количеством строк в датасете
+    if len(resPredict) != len(df):
+        raise ValueError("Количество предсказаний должно совпадать с количеством строк в датасете")
+
+    # Создание списка строк с данными, для которых предсказание равно 1
+    positive_predictions = []
+    for index, row in df.iterrows():
+        if resPredict[index] == 1:
+            row_string = f"{row['Query']} {row['Time']}"
+            positive_predictions.append(row_string)
+
+    return positive_predictions
+
 def getThreadsByTime(filename, predictionOfDns, predictionOfDga):
     data = pd.read_csv(filename)
-    print(data.head(10))
     if 'Time' not in data.columns:
         print("Поле 'Time' не найдено в датасете.")
         return [0] * 24
@@ -63,12 +78,12 @@ def getRes(filename, dnsPred):
         "dnsThreadCount": dnsThreadCount, # Количество DNS тунелей
         "dgaThreadCount": dgaThreadCount, # Количество DGA атак
         "threadsByTIme": threadsByTIme, # количество угроз по часам
-        "listOfThreads": resPredict # Список для результирующей штуки
+        "listOfThreads": getListOfThreds(filename, resPredict) # Список для результирующей штуки
     }
     return res
 
 app = Flask(__name__)
-CORS(app, resources={r"/upload": {"origins": "http://ipAdressOfwebSite:posrt"}})
+CORS(app, supports_credentials=True, resources={r"/upload": {"origins": "http://172.25.67.192:3005"}})
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -82,10 +97,10 @@ def upload_file():
     if file:
         filename = secure_filename(file.filename)
         file.save(os.path.join('.', filename))
-        print('Сохранен файл ' + filename)
+        print(f'Сохранен файл {filename}')
 
         response = app.make_response('Файл успешно загружен')
-        response.headers['Access-Control-Allow-Origin'] = 'http://ipAdressOfwebSite:port'
+        response.headers['Access-Control-Allow-Origin'] = 'http://172.25.67.192:3005'
         response.headers['Access-Control-Allow-Credentials'] = 'true'
 
         dnsPred = model(filename)
@@ -93,10 +108,10 @@ def upload_file():
 
         if os.path.exists(filename):
             os.remove(filename)
-            print(f'{filename} был удален')
+            print(f'Удален файл {filename}')
 
         return jsonify(res), 200
 
 if __name__ == '__main__':
-    port = 5328
-    app.run(host='host', debug=True, port=port)
+    port = 5000
+    app.run(host='172.25.114.105', debug=True, port=port)
