@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 from flask_cors import CORS
 
 
-def model(validName):
+def model_dns(validName):
     test_data = pd.read_csv(validName)
     if 'Query' not in test_data.columns:
         print("Поле 'Query' не найдено в датасете.")
@@ -19,6 +19,21 @@ def model(validName):
     X_test_val_tfidf = vectorizer.transform(X_test_val)
 
     model = joblib.load('gradient_boosting_model.pkl')
+    y_pred = model.predict(X_test_val_tfidf)
+    return y_pred.tolist()
+
+
+def model_dga(validName):
+    test_data = pd.read_csv(validName)
+    if 'Query' not in test_data.columns:
+        print("Поле 'Query' не найдено в датасете.")
+        return [0]
+    X_test_val = test_data['Query']
+
+    vectorizer = joblib.load('model_dga_vectorizer.pkl')
+    X_test_val_tfidf = vectorizer.transform(X_test_val)
+
+    model = joblib.load('model_dga_AdaBoost.pkl')
     y_pred = model.predict(X_test_val_tfidf)
     return y_pred.tolist()
 
@@ -67,8 +82,7 @@ def getThreadsByTime(filename, predictionOfDns, predictionOfDga):
 
     return res
 
-def getRes(filename, dnsPred):
-    dgaPred = [0] * len(dnsPred)  # Место для второй модели
+def getRes(filename, dnsPred, dgaPred):
     resPredict = getResPredict(dnsPred, dgaPred)
     dnsThreadCount = dnsPred.count(1)
     dgaThreadCount = dgaPred.count(1)
@@ -103,8 +117,9 @@ def upload_file():
         response.headers['Access-Control-Allow-Origin'] = 'http://172.25.67.192:3005'
         response.headers['Access-Control-Allow-Credentials'] = 'true'
 
-        dnsPred = model(filename)
-        res = getRes(filename, dnsPred)
+        dnsPred = model_dns(filename)
+        dgaPred = model_dga(filename)
+        res = getRes(filename, dnsPred, dgaPred)
 
         if os.path.exists(filename):
             os.remove(filename)
