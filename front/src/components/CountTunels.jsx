@@ -4,22 +4,6 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const data = {
-  labels: ['Red', 'Blue', 'Yellow', 'DNS-туннелей'],
-  datasets: [
-    {
-      data: [300, 50, 100, 120],
-      backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#F31324'],
-      hoverBackgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#F31324'],
-    },
-  ],
-};
-
-const total = data.datasets[0].data.reduce((sum, value) => sum + value, 0);
-
-
-
-
   const options = {
     maintainAspectRatio: false,
     aspectRatio: 1, // Уменьшите это значение, чтобы сделать диаграмму меньше
@@ -31,7 +15,28 @@ const total = data.datasets[0].data.reduce((sum, value) => sum + value, 0);
     }
   };
 
-export const CountTunels = () => {
+export const CountTunels = ({ dataJson }) => {
+
+    const data = {
+      labels: ['DNS-туннелей', 'Семейство DGA'],
+      datasets: [
+        {
+          data: [0, 0],
+          backgroundColor: ['#FF6384', '#36A2EB'],
+          hoverBackgroundColor: ['#FF6384', '#36A2EB'],
+        },
+      ],
+    };
+
+
+    if (dataJson && typeof dataJson === 'object' && 'dnsThreadCount' in dataJson && 'dgaThreadCount' in dataJson) {
+      data.datasets[0].data = [dataJson['dnsThreadCount'], dataJson['dgaThreadCount']];
+    }
+
+    const total = data.datasets[0].data.reduce((sum, value) => sum + value, 0);
+    console.log(total);
+
+
     const centerTextPlugin = {
         id: 'centerText',
         beforeDraw: (chart) => {
@@ -46,7 +51,7 @@ export const CountTunels = () => {
           ctx.textAlign = "center";
       
           // Разделите текст на строки
-          const lines = [`Итог:`, total];
+          const lines = [`Итог: ${total}`];
           const textX = width / 2;
           const textY = height / 2 - (lines.length - 1) * fontSize * 8;
       
@@ -61,9 +66,14 @@ export const CountTunels = () => {
 
     return (
         <div style={{ width: '250px' }} className="flex items-center flex-col items-start max-w-md p-4 border rounded shadow-lg">
-            <div style={{ width: '200px', height: '200px' }}>
-            <Doughnut data={data} options={options} plugins={[centerTextPlugin]}/>
-            </div>
+           {dataJson ? (
+                <div style={{ width: '200px', height: '200px' }}>
+                    <Doughnut data={data} options={options} plugins={[centerTextPlugin]} />
+                </div>
+            ) : (
+                <p>No data available</p>
+            )}
+
             {/* Легенда */}
             <div className="flex flex-col items-start pl-4 mt-4 w-full">
                 {data.labels.map((label, index) => (

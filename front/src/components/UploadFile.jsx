@@ -1,8 +1,8 @@
 import { useState, useRef } from "react";
 
-const hostUrl = 'http://localhost:5000/upload';
+const hostUrl = 'http://172.25.114.105:5000/upload';
 
-export const UploadFile = () =>
+export const UploadFile = ({ onUploadSuccess }) =>
 {
     const filePicker = useRef(null);
     const [selectedFile, setSelctedFile] = useState(null);
@@ -22,19 +22,23 @@ export const UploadFile = () =>
         try {
             const formData = new FormData();
             formData.append('file', file);
-        
+
             const res = await fetch(hostUrl, {
                 method: 'POST',
+                credentials: 'include',
                 body: formData,
             });
             
             if (res.ok) {
+                const data = await res.json(); // Получить данные от сервера
                 setUploadStatus('uploaded');
+                console.log(data);
+                onUploadSuccess(data); // Вызов пропса после успешной загрузки
             } else {
                 setUploadStatus('failed');
             }
         } catch (error) {
-            setUploadStatus('failed');
+             setUploadStatus('failed');
         }
     };
     

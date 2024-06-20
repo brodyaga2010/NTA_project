@@ -2,13 +2,19 @@ import { UploadFile } from "./components/UploadFile";
 import { CountTunels } from "./components/CountTunels";
 import { TimeQuantityChart } from "./components/TimeQuantityChart";
 import { HorizontalBarChart } from "./components/HorizontalBarChart";
-import React, { useEffect } from 'react';
+import { ListThreads } from "./components/ListThreads";
+import React, { useEffect, useState } from 'react';
 
 
 function App() {
+  const [uploadedData, setUploadedData] = useState(null);
   useEffect(() => {
     document.title = 'RX-NTA';
   }, []);
+
+  const handleUploadSuccess = (data) => {
+    setUploadedData(data);
+  };
 
   return (
     <div className="App">
@@ -19,14 +25,15 @@ function App() {
       
       <div className="flex justify-between pb-4">
         <div className="w-1/2">
-          <UploadFile />
+          <UploadFile onUploadSuccess={handleUploadSuccess}/>
         </div>
         <div className="flex"> 
-          <HorizontalBarChart />
-          <CountTunels />
+          {/*<HorizontalBarChart />*/}
+          <ListThreads dataJson={uploadedData}/>
+          <CountTunels dataJson={uploadedData}/>
         </div>
       </div>
-      <TimeQuantityChart/>
+      <TimeQuantityChart dataJson={uploadedData}/>
 
 
     </div>
