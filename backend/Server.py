@@ -33,7 +33,7 @@ def model_dga(validName):
     vectorizer = joblib.load('model_dga_vectorizer.pkl')
     X_test_val_tfidf = vectorizer.transform(X_test_val)
 
-    model = joblib.load('model_dga_AdaBoost.pkl')
+    model = joblib.load('model_Random_Forest.pkl')
     y_pred = model.predict(X_test_val_tfidf)
     return y_pred.tolist()
 
@@ -89,6 +89,7 @@ def getRes(filename, dnsPred, dgaPred):
     threadsByTIme = getThreadsByTime(filename, dnsPred, dgaPred)
 
     res = {
+        "totalThreadsCount": resPredict.count(1),
         "dnsThreadCount": dnsThreadCount, # Количество DNS тунелей
         "dgaThreadCount": dgaThreadCount, # Количество DGA атак
         "threadsByTIme": threadsByTIme, # количество угроз по часам
@@ -120,7 +121,8 @@ def upload_file():
         dnsPred = model_dns(filename)
         dgaPred = model_dga(filename)
         res = getRes(filename, dnsPred, dgaPred)
-
+        print(res['dnsThreadCount'])
+        print(res['dgaThreadCount'])
         if os.path.exists(filename):
             os.remove(filename)
             print(f'Удален файл {filename}')
