@@ -8,11 +8,7 @@ from werkzeug.utils import secure_filename
 from flask_cors import CORS
 
 
-def model_dns(validName):
-    test_data = pd.read_csv(validName)
-    if 'Query' not in test_data.columns:
-        print("Поле 'Query' не найдено в датасете.")
-        return [0]
+def model_dns(test_data):
     X_test_val = test_data['Query']
 
     vectorizer = joblib.load('vectorizer.pkl')
@@ -23,11 +19,7 @@ def model_dns(validName):
     return y_pred.tolist()
 
 
-def model_dga(validName):
-    test_data = pd.read_csv(validName)
-    if 'Query' not in test_data.columns:
-        print("Поле 'Query' не найдено в датасете.")
-        return [0]
+def model_dga(test_data):
     X_test_val = test_data['Query']
 
     vectorizer = joblib.load('model_dga_vectorizer.pkl')
@@ -48,24 +40,26 @@ def getResPredict(predictionOfDns, predictionOfDga):
 
     return res
 
-def getListOfThreds(filename, resPredict):
-    df = pd.read_csv(filename)  # Используем пробел в качестве разделителя
-
+def getListOfThreds(data, resPredict):
     # Проверка, что длина предсказаний совпадает с количеством строк в датасете
-    if len(resPredict) != len(df):
+    if len(resPredict) != len(data):
         raise ValueError("Количество предсказаний должно совпадать с количеством строк в датасете")
 
     # Создание списка строк с данными, для которых предсказание равно 1
     positive_predictions = []
-    for index, row in df.iterrows():
+    for index, row in data.iterrows():
         if resPredict[index] == 1:
-            row_string = f"{row['Query']} {row['Time']}"
+            query = row['Query']
+            if (len(query.split(' ')) == 1):
+                row_string = f"{row['Query']} {row['Time']}"
+            else:
+                row_string = f"{query.split(' ')[1]} {row['Time']}"
+            #row_string = f"{row['Query']} {row['Time']}"
             positive_predictions.append(row_string)
 
     return positive_predictions
 
-def getThreadsByTime(filename, predictionOfDns, predictionOfDga):
-    data = pd.read_csv(filename)
+def getThreadsByTime(data, predictionOfDns, predictionOfDga):
     if 'Time' not in data.columns:
         print("Поле 'Time' не найдено в датасете.")
         return [0] * 24
@@ -82,20 +76,41 @@ def getThreadsByTime(filename, predictionOfDns, predictionOfDga):
 
     return res
 
-def getRes(filename, dnsPred, dgaPred):
+def getRes(data, dnsPred, dgaPred):
     resPredict = getResPredict(dnsPred, dgaPred)
     dnsThreadCount = dnsPred.count(1)
     dgaThreadCount = dgaPred.count(1)
-    threadsByTIme = getThreadsByTime(filename, dnsPred, dgaPred)
+    threadsByTIme = getThreadsByTime(data, dnsPred, dgaPred)
 
     res = {
+        "totalPackagesCount": len(resPredict),
         "totalThreadsCount": resPredict.count(1),
         "dnsThreadCount": dnsThreadCount, # Количество DNS тунелей
         "dgaThreadCount": dgaThreadCount, # Количество DGA атак
         "threadsByTIme": threadsByTIme, # количество угроз по часам
-        "listOfThreads": getListOfThreds(filename, resPredict) # Список для результирующей штуки
+        "listOfThreads": getListOfThreds(data, resPredict) # Список для результирующей штуки
     }
     return res
+
+
+def validate_dataset(data):
+    # Проверка наличия обязательных столбцов
+    required_columns = {'Query', 'Time'}
+    missing_columns = required_columns - set(data.columns)
+    if missing_columns:
+        print(f"Отсутствуют обязательные столбцы: {', '.join(missing_columns)}")
+        return False
+
+    # Проверка одинакового числа строк в каждом столбце
+    column_lengths = data.apply(lambda col: col.notna().sum())
+    unique_lengths = column_lengths.unique()
+    if len(unique_lengths) > 1:
+        print("В столбцах разное количество непустых строк:")
+        print(column_lengths)
+        return False
+
+    print("Датасет прошел проверку.")
+    return True
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True, resources={r"/upload": {"origins": "http://172.25.67.192:3005"}})
@@ -117,12 +132,14 @@ def upload_file():
         response = app.make_response('Файл успешно загружен')
         response.headers['Access-Control-Allow-Origin'] = 'http://172.25.67.192:3005'
         response.headers['Access-Control-Allow-Credentials'] = 'true'
-
-        dnsPred = model_dns(filename)
-        dgaPred = model_dga(filename)
-        res = getRes(filename, dnsPred, dgaPred)
-        print(res['dnsThreadCount'])
-        print(res['dgaThreadCount'])
+        data = pd.read_csv(filename)
+        if validate_dataset(data) == False:
+            return 'Некорректный датасет', 517
+        dnsPred = model_dns(data)
+        dgaPred = model_dga(data)
+        res = getRes(data, dnsPred, dgaPred)
+        #print(res['dnsThreadCount'])
+        #print(res['dgaThreadCount'])
         if os.path.exists(filename):
             os.remove(filename)
             print(f'Удален файл {filename}')
