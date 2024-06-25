@@ -6,6 +6,7 @@ from flask import Flask, request, jsonify
 import os
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
+from collections import Counter
 
 
 def model_dns(test_data):
@@ -22,12 +23,31 @@ def model_dns(test_data):
 def model_dga(test_data):
     X_test_val = test_data['Query']
 
-    vectorizer = joblib.load('model_dga_vectorizer.pkl')
+    vectorizer = joblib.load('tfidf_vectorizer_xtrain.pkl')
     X_test_val_tfidf = vectorizer.transform(X_test_val)
 
-    model = joblib.load('model_Random_Forest.pkl')
+    model = joblib.load('dga_model_rf.pkl')
     y_pred = model.predict(X_test_val_tfidf)
     return y_pred.tolist()
+
+
+def model_dga_subclass(test_data):
+    X_test_val = test_data['Query']
+
+    vectorizer = joblib.load('vectorizer_gram2-5.pkl')
+    X_test_val_tfidf = vectorizer.transform(X_test_val)
+
+    model = joblib.load('dga_subclass_logres.pkl')
+    y_pred = model.predict(X_test_val_tfidf)
+
+    label_encoder = joblib.load('label_encoder.pkl')
+    y_pred_labels = label_encoder.inverse_transform(y_pred)
+    prediction_counts = Counter(y_pred_labels)
+
+    labels = list(prediction_counts.keys())
+    counts = list(prediction_counts.values())
+
+    return {"labels_subclass": labels, "counts_subclass": counts}
 
 
 def getResPredict(predictionOfDns, predictionOfDga):
@@ -80,16 +100,20 @@ def getRes(data, dnsPred, dgaPred):
     resPredict = getResPredict(dnsPred, dgaPred)
     dnsThreadCount = dnsPred.count(1)
     dgaThreadCount = dgaPred.count(1)
-    threadsByTIme = getThreadsByTime(data, dnsPred, dgaPred)
+    threadsByTime = getThreadsByTime(data, dnsPred, dgaPred)
+    dgaSubclassCounts = model_dga_subclass(data)  # Получаем предсказания DGA_subclass
 
     res = {
         "totalPackagesCount": len(resPredict),
         "totalThreadsCount": resPredict.count(1),
-        "dnsThreadCount": dnsThreadCount, # Количество DNS тунелей
-        "dgaThreadCount": dgaThreadCount, # Количество DGA атак
-        "threadsByTIme": threadsByTIme, # количество угроз по часам
-        "listOfThreads": getListOfThreds(data, resPredict) # Список для результирующей штуки
+        "dnsThreadCount": dnsThreadCount,  # Количество DNS тунелей
+        "dgaThreadCount": dgaThreadCount,  # Количество DGA атак
+        "threadsByTime": threadsByTime,  # количество угроз по часам
+        "listOfThreads": getListOfThreads(data, resPredict), 
+        "labels_subclass": dgaSubclassCounts["labels_subclass"],
+        "labels_count_subclass": dgaSubclassCounts["counts_subclass"]
     }
+
     return res
 
 
