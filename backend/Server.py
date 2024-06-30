@@ -1,5 +1,4 @@
 import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
 import joblib
 from datetime import datetime
 from flask import Flask, request, jsonify
@@ -7,7 +6,7 @@ import os
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
 from collections import Counter
-
+import time
 
 def model_dns(test_data):
     X_test_val = test_data['Query']
@@ -60,7 +59,7 @@ def getResPredict(predictionOfDns, predictionOfDga):
 
     return res
 
-def getListOfThreds(data, resPredict):
+def getListOfThreads(data, resPredict):
     # Проверка, что длина предсказаний совпадает с количеством строк в датасете
     if len(resPredict) != len(data):
         raise ValueError("Количество предсказаний должно совпадать с количеством строк в датасете")
@@ -109,7 +108,7 @@ def getRes(data, dnsPred, dgaPred):
         "dnsThreadCount": dnsThreadCount,  # Количество DNS тунелей
         "dgaThreadCount": dgaThreadCount,  # Количество DGA атак
         "threadsByTime": threadsByTime,  # количество угроз по часам
-        "listOfThreads": getListOfThreads(data, resPredict), 
+        "listOfThreads": getListOfThreads(data, resPredict),
         "labels_subclass": dgaSubclassCounts["labels_subclass"],
         "labels_count_subclass": dgaSubclassCounts["counts_subclass"]
     }
@@ -149,6 +148,8 @@ def upload_file():
         print('Нет выбранного файла')
         return 'Нет выбранного файла', 400
     if file:
+        start_time = time.time()
+
         filename = secure_filename(file.filename)
         file.save(os.path.join('.', filename))
         print(f'Сохранен файл {filename}')
@@ -159,14 +160,18 @@ def upload_file():
         data = pd.read_csv(filename)
         if validate_dataset(data) == False:
             return 'Некорректный датасет', 517
+
         dnsPred = model_dns(data)
         dgaPred = model_dga(data)
         res = getRes(data, dnsPred, dgaPred)
-        #print(res['dnsThreadCount'])
-        #print(res['dgaThreadCount'])
+
         if os.path.exists(filename):
             os.remove(filename)
             print(f'Удален файл {filename}')
+
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f"Время выполнения: {elapsed_time:.6f} секунд")
 
         return jsonify(res), 200
 
