@@ -5,9 +5,9 @@ import { HorizontalBarChart } from "./components/HorizontalBarChart";
 import { ListThreads } from "./components/ListThreads";
 import React, { useEffect, useState } from 'react';
 
-
 function App() {
   const [uploadedData, setUploadedData] = useState(null);
+
   useEffect(() => {
     document.title = 'RX-NTA';
   }, []);
@@ -18,24 +18,35 @@ function App() {
 
   return (
     <div className="App">
+      {/* Шапка приложения */}
       <div className="bg-gray-800 text-white p-2">
         <h1 className="m-0">RX-NTA</h1>
       </div>
       <div className="mt-2 bg-gray-800 h-1"></div>
-      
-      <div className="flex justify-between pb-4">
-        <div className="w-1/2">
-          <UploadFile onUploadSuccess={handleUploadSuccess}/>
+
+      <div className="flex flex-wrap justify-center sm:justify-start gap-4">
+        <div className="m-2 flex-shrink-0">
+          <UploadFile onUploadSuccess={handleUploadSuccess} />
         </div>
-        <div className="flex"> 
-          {/*<HorizontalBarChart />*/}
-          <ListThreads dataJson={uploadedData}/>
-          <CountTunels dataJson={uploadedData}/>
-        </div>
+
+        {/* Компоненты рендерятся только если данные загружены */}
+        {uploadedData && (
+          <>
+            <div className="m-2 flex-shrink-0">
+              <ListThreads dataJson={uploadedData} className="w-full" />
+            </div>
+            <div className="m-2 flex-shrink-0">
+              <CountTunels dataJson={uploadedData} className="h-full" />
+            </div>
+            <div className="m-2 flex-shrink-0">
+              <HorizontalBarChart dataJson={uploadedData} />
+            </div>
+            <div className="m-2 flex-shrink-0">
+              <TimeQuantityChart dataJson={uploadedData} className="w-full" />
+            </div>
+          </>
+        )}
       </div>
-      <TimeQuantityChart dataJson={uploadedData}/>
-
-
     </div>
   );
 }
