@@ -9,53 +9,53 @@ NTA project and ML
 ## Project Organization
 
 ```
-├── LICENSE            <- Open-source license if one is chosen
-├── Makefile           <- Makefile with convenience commands like `make data` or `make train`
-├── README.md          <- The top-level README for developers using this project.
+├── LICENSE            <- Лицензия с открытым исходным кодом, если она выбрана
+├── Makefile           <- Makefile с удобными командами, такими как `make data` или `make train`
+├── README.md          <- Основной README для разработчиков, использующих этот проект.
 ├── data
-│   ├── external       <- Data from third party sources.
-│   ├── interim        <- Intermediate data that has been transformed.
-│   ├── processed      <- The final, canonical data sets for modeling.
-│   └── raw            <- The original, immutable data dump.
+│   ├── external       <- Данные из сторонних источников.
+│   ├── interim        <- Преобразованные промежуточные данные.
+│   ├── processed      <- Итоговые, каноничные наборы данных для моделирования.
+│   └── raw            <- Оригинальный, неизменяемый дамп данных.
 │
-├── docs               <- A default mkdocs project; see mkdocs.org for details
+├── docs               <- Проект по умолчанию для mkdocs; см. mkdocs.org для подробностей
 │
-├── models             <- Trained and serialized models, model predictions, or model summaries
+├── models             <- Обученные и сериализованные модели, прогнозы моделей или сводки моделей
 │
-├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-│                         the creator's initials, and a short `-` delimited description, e.g.
-│                         `1.0-jqp-initial-data-exploration`.
+├── notebooks          <- Jupyter ноутбуки. Конвенция именования: номер (для упорядочивания), 
+        инициалы создателя и короткое описание через дефис, 
+        например, `1.0-jqp-initial-data-exploration`.
 │
-├── pyproject.toml     <- Project configuration file with package metadata for nta_project
-│                         and configuration for tools like black
+├── pyproject.toml     <- Конфигурационный файл проекта с метаданными пакета для NTA_project
+        и конфигурация для инструментов, таких как black
 │
-├── references         <- Data dictionaries, manuals, and all other explanatory materials.
+├── references         <- Словари данных, руководства и все другие пояснительные материалы.
 │
-├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-│   └── figures        <- Generated graphics and figures to be used in reporting
+├── reports            <- Сгенерированный анализ в виде HTML, PDF, LaTeX и т.д.
+│   └── figures        <- Сгенерированная графика и фигуры, используемые в отчетах
 │
-├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-│                         generated with `pip freeze > requirements.txt`
+├── requirements.txt   <- Файл требований для воспроизведения аналитической среды, например, 
+        сгенерированный с помощью `pip freeze > requirements.txt`
 │
-├── setup.cfg          <- Configuration file for flake8
+├── setup.cfg          <- Конфигурационный файл для flake8
 │
-└── nta_project                <- Source code for use in this project.
+└── ai_assistant                <- Исходный код для использования в этом проекте.
     │
-    ├── __init__.py    <- Makes nta_project a Python module
+    ├── __init__.py    <- Делает NTA_project модулем Python
     │
-    ├── data           <- Scripts to download or generate data
+    ├── data           <- Скрипты для загрузки или генерации данных
     │   └── make_dataset.py
     │
-    ├── features       <- Scripts to turn raw data into features for modeling
+    ├── features       <- Скрипты для преобразования необработанных данных в признаки для моделирования
     │   └── build_features.py
     │
-    ├── models         <- Scripts to train models and then use trained models to make
-    │   │                 predictions
+    ├── models         <- Скрипты для обучения моделей и затем использования обученных моделей для предсказаний
     │   ├── predict_model.py
     │   └── train_model.py
     │
-    └── visualization  <- Scripts to create exploratory and results oriented visualizations
+    └── visualization  <- Скрипты для создания исследовательских и результат-ориентированных визуализаций
         └── visualize.py
+
 ```
 
 --------
