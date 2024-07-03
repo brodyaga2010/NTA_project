@@ -1,46 +1,50 @@
-import React, { useState } from 'react';
+import React, { memo } from'react';
+import { FixedSizeList as List } from'react-window';
 
-export const ListThreads = ({ dataJson }) => {
+// Компонент ThreadItem отображает отдельный элемент списка
+const ThreadItem = memo(({ index, style, data }) => {
+  const item = data[index];
+  const [Name, Date, Time] = item.split(' ');
 
-    const containerStyle = {
-        width: '800px',
-        maxHeight: '400px', // Ограничение по высоте
-        overflowY: 'auto', // Полоса прокрутки по вертикали
-    };
+  return (
+    <div className="py-2">
+      <div className="pb-2 border-b border-gray-300" style={style}>
+        <span className="block text-red-600 text-base">{Name}</span>
+        <span className="block text-blue-600 text-base">{Date} {Time}</span>
+      </div>
+    </div>
+  );
+});
 
-    if (dataJson && typeof dataJson === 'object' && 'listOfThreads' in dataJson) {
-        const data = dataJson['listOfThreads'];
+const ListThreads = memo(({ dataJson }) => {
+  const data = dataJson?.listOfThreads; // Получаем данные списка из объекта dataJson
 
+  return (
+    <div className="mr-4">
+      <h2 className="text-xl font-semibold mb-0 border-b-2 border pb-2 text-blue-600 bg-white shadow-lg p-4">
+        Результат работы моделей по детектированию угроз
+      </h2>
+      {data? (
+        <div className="text-xl font-semibold mb-0 border-b-2 border pb-2 pl-2 pr-2 text-blue-600 bg-white shadow-lg">
+            <List
+            height={400} // Высота списка
+            itemCount={data.length} // Количество элементов в списке
+            itemSize={50} // Высота каждого элемента списка
+            width={600} // Ширина списка
+            itemData={data} // Данные элементов списка
+            >
+            {ThreadItem}
+            </List>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow-lg p-4 text-center border">
+          Данные отсутствуют
+        </div>
+      )}
+    </div>
+  );
+});
 
-        return (
-            <div className='mr-4'>
-                <h2 className="text-xl font-semibold mb-0 border-b-2 border-gray-300 pb-2 text-blue-600 bg-white shadow-lg p-4">Список угроз</h2>
-                <div style={containerStyle} className="bg-white rounded-lg shadow-lg p-4">
-                    <ul className="divide-y divide-gray-300">
-                        {data.map((str, index) => {
-                            const [Name, Date, Time] = str.split(' ');
-                            return (
-                                <li key={index} className="py-2">
-                                    <span className="text-red-600">{Name}</span>
-                                    <br />
-                                    <span className="text-blue-600">{Date} {Time}</span>
-                                </li>
-                            );
-                        })}
-                    </ul>
-                </div>
-            </div>
-        );
-    } 
-    else
-    {
-        return (
-            <div className='mr-4'>
-                <h2 className="text-xl font-semibold mb-0 border-b-2 border-gray-300 pb-2 text-blue-600 bg-white shadow-lg p-4">Список угроз</h2>
-                <div style={containerStyle} className="bg-white rounded-lg shadow-lg p-4 text-center">
-                    No data available
-                </div>
-            </div>
-        );
-    }
-};
+export default ListThreads;
+
+           
