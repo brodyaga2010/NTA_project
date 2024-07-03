@@ -1,8 +1,8 @@
 import { UploadFile } from "./components/UploadFile";
 import { CountTunels } from "./components/CountTunels";
 import { TimeQuantityChart } from "./components/TimeQuantityChart";
-import { HorizontalBarChart } from "./components/HorizontalBarChart";
-import { ListThreads } from "./components/ListThreads";
+import { ClassHorizontalBarChart } from "./components/ClassHorizontalBarChart";
+import ListThreads from "./components/ListThreads"; 
 import React, { useEffect, useState } from 'react';
 
 function App() {
@@ -39,7 +39,7 @@ function App() {
               <CountTunels dataJson={uploadedData} className="h-full" />
             </div>
             <div className="m-2 flex-shrink-0">
-              <HorizontalBarChart dataJson={uploadedData} />
+              <ClassHorizontalBarChart dataJson={uploadedData} />
             </div>
             <div className="m-2 flex-shrink-0">
               <TimeQuantityChart dataJson={uploadedData} className="w-full" />
