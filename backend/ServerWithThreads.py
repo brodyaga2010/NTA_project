@@ -189,7 +189,7 @@ def get_res(data, dns_pred, dga_pred, dga_subclass_counts):
         "dnsThreadCount": dns_threat_count,  # Количество DNS тунелей
         "dgaThreadCount": dga_threat_count,  # Количество DGA атак
         "threadsByTime": threats_by_time,  # количество угроз по часам
-        "list_ofThreads": get_list_of_threats(data, res_predict),
+        "listOfThreads": get_list_of_threats(data, res_predict),
         "labels_subclass": dga_subclass_counts["labels_subclass"],
         "labels_count_subclass": dga_subclass_counts["counts_subclass"]
     }
