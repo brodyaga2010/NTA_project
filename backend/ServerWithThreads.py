@@ -10,7 +10,6 @@ import time
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 import numpy as np
 
-
 def model_dns(test_data):
     X_test_val = test_data['Query']
 
@@ -208,6 +207,9 @@ def upload_file():
         start_time = time.time()
 
         filename = secure_filename(file.filename)
+        if filename.split('.')[1] != 'csv':
+            return 'неверный формат файла', 450
+
         file.save(os.path.join('.', filename))
         print(f'Сохранен файл {filename}')
 
