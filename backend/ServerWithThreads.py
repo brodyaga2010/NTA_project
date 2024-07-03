@@ -56,35 +56,34 @@ def model_dga_subclass(test_data):
     return {"labels_subclass": labels, "counts_subclass": counts}
 
 
-def getResPredict(predictionOfDns, predictionOfDga):
-    res = [0] * len(predictionOfDns)
-    for i in range(len(predictionOfDns)):
-        if predictionOfDns[i] + predictionOfDga[i] > 0:
+def get_res_predict(prediction_of_dns, prediction_of_dga):
+    res = [0] * len(prediction_of_dns)
+    for i in range(len(prediction_of_dns)):
+        if prediction_of_dns[i] + prediction_of_dga[i] > 0:
             res[i] = 1
         else:
             res[i] = 0
     return res
 
-def getListOfThreads(data, resPredict):
+def get_list_of_threads(data, res_predict):
     # Проверка, что длина предсказаний совпадает с количеством строк в датасете
-    if len(resPredict) != len(data):
+    if len(res_predict) != len(data):
         raise ValueError("Количество предсказаний должно совпадать с количеством строк в датасете")
 
     # Создание списка строк с данными, для которых предсказание равно 1
     positive_predictions = []
     for index, row in data.iterrows():
-        if resPredict[index] == 1:
+        if res_predict[index] == 1:
             query = row['Query']
             if (len(query.split(' ')) == 1):
                 row_string = f"{row['Query']} {row['Time']}"
             else:
                 row_string = f"{query.split(' ')[1]} {row['Time']}"
-            #row_string = f"{row['Query']} {row['Time']}"
             positive_predictions.append(row_string)
 
     return positive_predictions
 
-def getThreadsByTime(data, predictionOfDns, predictionOfDga):
+def get_threads_by_time(data, prediction_of_dns, prediction_of_dga):
     if 'Time' not in data.columns:
         print("Поле 'Time' не найдено в датасете.")
         return [0] * 24
@@ -94,18 +93,18 @@ def getThreadsByTime(data, predictionOfDns, predictionOfDga):
 
     # Цикл для вывода всех часов
     for index, row in data.iterrows():
-        if predictionOfDns[index] > 0:
+        if prediction_of_dns[index] > 0:
             res[int(row['Hour'])] += 1
-        if predictionOfDga[index] > 0:
+        if prediction_of_dga[index] > 0:
             res[int(row['Hour'])] += 1
 
     return res
 
-def getRes(data, dnsPred, dgaPred, dgaSubclassCounts):
-    resPredict = getResPredict(dnsPred, dgaPred)
-    dnsThreadCount = dnsPred.count(1)
-    dgaThreadCount = dgaPred.count(1)
-    threadsByTime = getThreadsByTime(data, dnsPred, dgaPred)
+def get_res(data, dns_pred, dga_pred, dga_subclass_counts):
+    resPredict = get_res_predict(dns_pred, dga_pred)
+    dnsThreadCount = dns_pred.count(1)
+    dgaThreadCount = dga_pred.count(1)
+    threadsByTime = get_threads_by_time(data, dns_pred, dga_pred)
 
     res = {
         "totalPackagesCount": len(resPredict),
@@ -113,9 +112,9 @@ def getRes(data, dnsPred, dgaPred, dgaSubclassCounts):
         "dnsThreadCount": dnsThreadCount,  # Количество DNS тунелей
         "dgaThreadCount": dgaThreadCount,  # Количество DGA атак
         "threadsByTime": threadsByTime,  # количество угроз по часам
-        "listOfThreads": getListOfThreads(data, resPredict),
-        "labels_subclass": dgaSubclassCounts["labels_subclass"],
-        "labels_count_subclass": dgaSubclassCounts["counts_subclass"]
+        "list_ofThreads": get_list_of_threads(data, resPredict),
+        "labels_subclass": dga_subclass_counts["labels_subclass"],
+        "labels_count_subclass": dga_subclass_counts["counts_subclass"]
     }
 
     return res
@@ -224,8 +223,8 @@ def upload_file():
         #dgaPred = model_dga(data)
         #dgaSubclassCounts = model_dga_subclass(data)
 
-        dnsPred, dgaPred, dgaSubclassCounts = process_data_in_threads_by_data(data)
-        res = getRes(data, dnsPred, dgaPred, dgaSubclassCounts)
+        dns_pred, dga_pred, dga_subclass_counts = process_data_in_threads_by_data(data)
+        res = get_res(data, dns_pred, dga_pred, dga_subclass_counts)
 
         if os.path.exists(filename):
             os.remove(filename)
@@ -236,8 +235,3 @@ def upload_file():
         print(f"Время выполнения: {elapsed_time:.6f} секунд")
 
         return jsonify(res), 200
-
-if __name__ == '__main__':
-    port = 5000
-    host = '172.25.114.105'
-    app.run(host=host, debug=True, port=port)
