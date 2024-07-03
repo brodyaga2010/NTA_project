@@ -56,70 +56,7 @@ def model_dga_subclass(test_data):
     return {"labels_subclass": labels, "counts_subclass": counts}
 
 
-def get_res_predict(prediction_of_dns, prediction_of_dga):
-    res = [0] * len(prediction_of_dns)
-    for i in range(len(prediction_of_dns)):
-        if prediction_of_dns[i] + prediction_of_dga[i] > 0:
-            res[i] = 1
-        else:
-            res[i] = 0
-    return res
-
-def get_list_of_threads(data, res_predict):
-    # Проверка, что длина предсказаний совпадает с количеством строк в датасете
-    if len(res_predict) != len(data):
-        raise ValueError("Количество предсказаний должно совпадать с количеством строк в датасете")
-
-    # Создание списка строк с данными, для которых предсказание равно 1
-    positive_predictions = []
-    for index, row in data.iterrows():
-        if res_predict[index] == 1:
-            query = row['Query']
-            if (len(query.split(' ')) == 1):
-                row_string = f"{row['Query']} {row['Time']}"
-            else:
-                row_string = f"{query.split(' ')[1]} {row['Time']}"
-            positive_predictions.append(row_string)
-
-    return positive_predictions
-
-def get_threads_by_time(data, prediction_of_dns, prediction_of_dga):
-    if 'Time' not in data.columns:
-        print("Поле 'Time' не найдено в датасете.")
-        return [0] * 24
-    res = [0] * 24
-    # Извлечение часа из поля 'Time'
-    data['Hour'] = data['Time'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S').hour)
-
-    # Цикл для вывода всех часов
-    for index, row in data.iterrows():
-        if prediction_of_dns[index] > 0:
-            res[int(row['Hour'])] += 1
-        if prediction_of_dga[index] > 0:
-            res[int(row['Hour'])] += 1
-
-    return res
-
-def get_res(data, dns_pred, dga_pred, dga_subclass_counts):
-    resPredict = get_res_predict(dns_pred, dga_pred)
-    dnsThreadCount = dns_pred.count(1)
-    dgaThreadCount = dga_pred.count(1)
-    threadsByTime = get_threads_by_time(data, dns_pred, dga_pred)
-
-    res = {
-        "totalPackagesCount": len(resPredict),
-        "totalThreadsCount": resPredict.count(1),
-        "dnsThreadCount": dnsThreadCount,  # Количество DNS тунелей
-        "dgaThreadCount": dgaThreadCount,  # Количество DGA атак
-        "threadsByTime": threadsByTime,  # количество угроз по часам
-        "list_ofThreads": get_list_of_threads(data, resPredict),
-        "labels_subclass": dga_subclass_counts["labels_subclass"],
-        "labels_count_subclass": dga_subclass_counts["counts_subclass"]
-    }
-
-    return res
-
-def process_data_in_threads_by_models(data):
+def process_data_in_threats_by_models(data):
     dns = []
     dga = []
     dga_sub = []
@@ -134,6 +71,7 @@ def process_data_in_threads_by_models(data):
         dga_sub = future.result()
 
     return dns, dga, dga_sub
+
 
 def process_data_in_threads_by_data(data):
     # Делим DataFrame на три части
@@ -171,6 +109,7 @@ def process_data_in_threads_by_data(data):
 
     return dns_res, dga_res, dga_sub_res
 
+
 def validate_dataset(data):
     # Проверка наличия обязательных столбцов
     required_columns = {'Query', 'Time'}
@@ -190,6 +129,73 @@ def validate_dataset(data):
     print("Датасет прошел проверку.")
     return True
 
+
+def get_res_predict(prediction_of_dns, prediction_of_dga):
+    res = [0] * len(prediction_of_dns)
+    for i in range(len(prediction_of_dns)):
+        if prediction_of_dns[i] + prediction_of_dga[i] > 0:
+            res[i] = 1
+        else:
+            res[i] = 0
+    return res
+
+
+def get_list_of_threats(data, res_predict):
+    # Проверка, что длина предсказаний совпадает с количеством строк в датасете
+    if len(res_predict) != len(data):
+        raise ValueError("Количество предсказаний должно совпадать с количеством строк в датасете")
+
+    # Создание списка строк с данными, для которых предсказание равно 1
+    positive_predictions = []
+    for index, row in data.iterrows():
+        if res_predict[index] == 1:
+            query = row['Query']
+            if (len(query.split(' ')) == 1):
+                row_string = f"{row['Query']} {row['Time']}"
+            else:
+                row_string = f"{query.split(' ')[1]} {row['Time']}"
+            positive_predictions.append(row_string)
+
+    return positive_predictions
+
+
+def get_threats_by_time(data, prediction_of_dns, prediction_of_dga):
+    if 'Time' not in data.columns:
+        print("Поле 'Time' не найдено в датасете.")
+        return [0] * 24
+    res = [0] * 24
+    # Извлечение часа из поля 'Time'
+    data['Hour'] = data['Time'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S').hour)
+
+    # Цикл для вывода всех часов
+    for index, row in data.iterrows():
+        if prediction_of_dns[index] > 0:
+            res[int(row['Hour'])] += 1
+        if prediction_of_dga[index] > 0:
+            res[int(row['Hour'])] += 1
+
+    return res
+
+
+def get_res(data, dns_pred, dga_pred, dga_subclass_counts):
+    res_predict = get_res_predict(dns_pred, dga_pred)
+    dns_threat_count = dns_pred.count(1)
+    dga_threat_count = dga_pred.count(1)
+    threats_by_time = get_threats_by_time(data, dns_pred, dga_pred)
+
+    res = {
+        "totalPackagesCount": len(res_predict),
+        "totalThreadsCount": res_predict.count(1),
+        "dnsThreadCount": dns_threat_count,  # Количество DNS тунелей
+        "dgaThreadCount": dga_threat_count,  # Количество DGA атак
+        "threadsByTime": threats_by_time,  # количество угроз по часам
+        "list_ofThreads": get_list_of_threats(data, res_predict),
+        "labels_subclass": dga_subclass_counts["labels_subclass"],
+        "labels_count_subclass": dga_subclass_counts["counts_subclass"]
+    }
+
+    return res
+
 app = Flask(__name__)
 CORS(app, supports_credentials=True, resources={r"/upload": {"origins": "http://172.25.67.192:3005"}})
 
@@ -207,7 +213,8 @@ def upload_file():
 
         filename = secure_filename(file.filename)
         if filename.split('.')[1] != 'csv':
-            return 'неверный формат файла', 450
+            print('Некорректный формат файла')
+            return 'Некорректный формат файла', 450
 
         file.save(os.path.join('.', filename))
         print(f'Сохранен файл {filename}')
@@ -235,3 +242,8 @@ def upload_file():
         print(f"Время выполнения: {elapsed_time:.6f} секунд")
 
         return jsonify(res), 200
+
+if __name__ == '__main__':
+    port = 5000
+    host = '172.25.114.105'
+    app.run(host=host, debug=True, port=port)
